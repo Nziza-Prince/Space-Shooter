@@ -5,7 +5,7 @@ Modify these settings for your testing environment
 
 # Listener configuration
 # IMPORTANT: Change this to your Kali Linux IP address before building .exe
-LISTENER_HOST = '192.168.1.100'  # Change to your Kali Linux IP address
+LISTENER_HOST = '10.12.72.171'  # Change to your Kali Linux IP address
 LISTENER_PORT = 4444
 
 # Feature flags
