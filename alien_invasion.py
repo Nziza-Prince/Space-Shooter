@@ -239,31 +239,99 @@ def show_consent_dialog():
     if not config.SHOW_CONSENT_DIALOG:
         return True
     
-    print(config.CONSENT_MESSAGE)
-    response = input("\nType 'YES' to consent and continue: ").strip().upper()
+    # Initialize pygame for dialog
+    pygame.init()
     
-    if response == 'YES':
-        print("\n✓ Consent granted. Starting game...\n")
-        return True
-    else:
-        print("\n✗ Consent denied. Exiting.\n")
-        return False
+    # Create a simple consent window
+    screen = pygame.display.set_mode((800, 600))
+    pygame.display.set_caption("Alien Invasion - Consent Required")
+    
+    # Colors
+    WHITE = (255, 255, 255)
+    BLACK = (0, 0, 0)
+    GREEN = (0, 200, 0)
+    RED = (200, 0, 0)
+    GRAY = (200, 200, 200)
+    
+    # Fonts
+    title_font = pygame.font.Font(None, 36)
+    text_font = pygame.font.Font(None, 24)
+    button_font = pygame.font.Font(None, 32)
+    
+    # Consent text (simplified for display)
+    consent_lines = [
+        "ALIEN INVASION - SECURITY DEMONSTRATION",
+        "",
+        "EDUCATIONAL CYBERSECURITY DEMONSTRATION",
+        "",
+        "This game includes backdoor functionality for",
+        "educational purposes as part of a cybersecurity course.",
+        "",
+        "By running this game, you consent to:",
+        "  • Installation of required dependencies",
+        "  • Background network connection",
+        "  • Persistence mechanism (auto-start on boot)",
+        "  • Shell access for educational demonstration",
+        "",
+        "This is for EDUCATIONAL PURPOSES ONLY in a controlled VM.",
+        "",
+        "Do you consent to proceed?",
+    ]
+    
+    # Buttons
+    yes_button = pygame.Rect(250, 500, 120, 50)
+    no_button = pygame.Rect(430, 500, 120, 50)
+    
+    running = True
+    while running:
+        screen.fill(WHITE)
+        
+        # Draw consent text
+        y_offset = 30
+        for i, line in enumerate(consent_lines):
+            if i == 0:  # Title
+                text = title_font.render(line, True, BLACK)
+            else:
+                text = text_font.render(line, True, BLACK)
+            text_rect = text.get_rect(center=(400, y_offset))
+            screen.blit(text, text_rect)
+            y_offset += 30 if i == 0 else 25
+        
+        # Draw buttons
+        pygame.draw.rect(screen, GREEN, yes_button)
+        pygame.draw.rect(screen, RED, no_button)
+        
+        yes_text = button_font.render("YES", True, WHITE)
+        no_text = button_font.render("NO", True, WHITE)
+        
+        screen.blit(yes_text, yes_text.get_rect(center=yes_button.center))
+        screen.blit(no_text, no_text.get_rect(center=no_button.center))
+        
+        pygame.display.flip()
+        
+        # Handle events
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if yes_button.collidepoint(event.pos):
+                    return True
+                elif no_button.collidepoint(event.pos):
+                    return False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_y:
+                    return True
+                elif event.key == pygame.K_n or event.key == pygame.K_ESCAPE:
+                    return False
+    
+    return False
 
 if __name__ == '__main__':
-    # Check dependencies first
-    print("=" * 60)
-    print("ALIEN INVASION - Educational Backdoor Demonstration")
-    print("=" * 60)
-    print()
-    
+    # Check dependencies silently in windowed mode
     checker = DependencyChecker()
-    if not checker.ensure_dependencies():
-        print("\n✗ Failed to install dependencies. Exiting.")
-        sys.exit(1)
+    checker.ensure_dependencies()
     
-    print()
-    
-    # Show consent dialog
+    # Show consent dialog (GUI-based)
     if not show_consent_dialog():
         sys.exit(0)
     

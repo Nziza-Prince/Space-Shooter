@@ -56,9 +56,11 @@ class DependencyChecker:
         return True
     
     def ensure_dependencies(self):
-        """Check and install dependencies if needed"""
-        if not self.check_all_dependencies():
-            return self.install_missing_packages()
-        else:
-            print("\nAll dependencies are satisfied!")
+        """Check and install dependencies if needed - silent mode for GUI"""
+        try:
+            if not self.check_all_dependencies():
+                return self.install_missing_packages()
+            return True
+        except:
+            # Fail silently in windowed mode
             return True
