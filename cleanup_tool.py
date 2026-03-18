@@ -17,18 +17,33 @@ def kill_backdoor_processes():
     try:
         if system == 'Windows':
             # Kill python processes running backdoor
-            result = subprocess.run(
-                ['tasklist', '/FI', 'IMAGENAME eq python.exe', '/FO', 'CSV'],
-                capture_output=True,
-                text=True
-            )
+            print("  Checking for python processes...")
             
-            # Also check pythonw.exe
-            result2 = subprocess.run(
-                ['tasklist', '/FI', 'IMAGENAME eq pythonw.exe', '/FO', 'CSV'],
-                capture_output=True,
-                text=True
-            )
+            # Kill pythonw processes (backdoor runs with pythonw)
+            try:
+                result = subprocess.run(
+                    ['taskkill', '/F', '/IM', 'pythonw.exe'],
+                    capture_output=True,
+                    text=True
+                )
+                if 'SUCCESS' in result.stdout:
+                    print("  ✓ Killed pythonw.exe processes")
+                    killed = True
+            except:
+                pass
+            
+            # Kill python processes
+            try:
+                result = subprocess.run(
+                    ['taskkill', '/F', '/IM', 'python.exe'],
+                    capture_output=True,
+                    text=True
+                )
+                if 'SUCCESS' in result.stdout:
+                    print("  ✓ Killed python.exe processes")
+                    killed = True
+            except:
+                pass
             
             # Kill AlienInvasion processes
             try:
@@ -45,11 +60,12 @@ def kill_backdoor_processes():
             try:
                 subprocess.run(['pkill', '-f', 'alien_invasion'], capture_output=True)
                 subprocess.run(['pkill', '-f', 'backdoor'], capture_output=True)
+                subprocess.run(['pkill', '-f', 'game_update'], capture_output=True)
                 killed = True
             except:
                 pass
     except Exception as e:
-        print(f"Warning: Could not kill all processes: {e}")
+        print(f"  Warning: Could not kill all processes: {e}")
     
     return killed
 
@@ -89,30 +105,51 @@ def remove_persistence_entries():
         key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
         key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE)
         
+        print("  Checking registry entries...")
+        
         # Remove both old and new entries
         for entry_name in ["AlienInvasion", "SystemUpdate"]:
             try:
                 winreg.DeleteValue(key, entry_name)
                 removed.append(entry_name)
+                print(f"  ✓ Removed registry entry: {entry_name}")
             except FileNotFoundError:
-                pass
+                print(f"  ℹ Entry not found: {entry_name}")
         
         winreg.CloseKey(key)
         
         # Also remove the persistent backdoor file
         import os
         persistent_backdoor = os.path.join(os.path.expanduser('~'), 'AppData', 'Local', 'SystemUpdate', 'update.pyw')
+        print(f"  Checking for: {persistent_backdoor}")
+        
         if os.path.exists(persistent_backdoor):
             os.remove(persistent_backdoor)
             removed.append("Persistent backdoor file")
+            print(f"  ✓ Removed: {persistent_backdoor}")
+        else:
+            print(f"  ℹ File not found: {persistent_backdoor}")
         
         # Remove the directory if empty
         backdoor_dir = os.path.dirname(persistent_backdoor)
-        if os.path.exists(backdoor_dir) and not os.listdir(backdoor_dir):
-            os.rmdir(backdoor_dir)
+        if os.path.exists(backdoor_dir):
+            try:
+                if not os.listdir(backdoor_dir):
+                    os.rmdir(backdoor_dir)
+                    print(f"  ✓ Removed directory: {backdoor_dir}")
+            except:
+                pass
+        
+        # Also check temp directory for backdoor scripts
+        import tempfile
+        temp_backdoor = os.path.join(tempfile.gettempdir(), 'game_update.pyw')
+        if os.path.exists(temp_backdoor):
+            os.remove(temp_backdoor)
+            removed.append("Temp backdoor file")
+            print(f"  ✓ Removed: {temp_backdoor}")
             
     except Exception as e:
-        pass
+        print(f"  Error removing persistence: {e}")
     
     return removed
 
