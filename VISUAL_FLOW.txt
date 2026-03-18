@@ -1,0 +1,340 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    ALIEN INVASION BACKDOOR PROJECT                           ║
+║                         Visual Flow Diagram                                  ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+
+SETUP PHASE (Before Presentation)
+═════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  YOU (Kali Linux)                                                           │
+│                                                                             │
+│  1. Get IP Address                                                          │
+│     $ ip addr show                                                          │
+│     → 192.168.1.100                                                         │
+│                                                                             │
+│  2. Build Windows .exe                                                      │
+│     $ ./quick_build.sh                                                      │
+│     → Creates: dist/AlienInvasion.exe                                       │
+│                                                                             │
+│  3. Prepare USB Drive                                                       │
+│     ┌─────────────────────────┐                                            │
+│     │ USB Drive               │                                            │
+│     │ ├── AlienInvasion.exe   │                                            │
+│     │ └── images/             │                                            │
+│     │     ├── ship.png        │                                            │
+│     │     ├── alien.png       │                                            │
+│     │     └── Pasted image.png│                                            │
+│     └─────────────────────────┘                                            │
+│                                                                             │
+│  4. Give USB to Colleague ──────────────────────────────────────────────┐  │
+└─────────────────────────────────────────────────────────────────────────┼──┘
+                                                                          │
+                                                                          │
+                                                                          ▼
+                                                        ┌─────────────────────────┐
+                                                        │  COLLEAGUE (Windows)    │
+                                                        │                         │
+                                                        │  Receives USB drive     │
+                                                        │  with game files        │
+                                                        └─────────────────────────┘
+
+
+PRESENTATION PHASE (Demo Day)
+═════════════════════════════════════════════════════════════════════════════
+
+STEP 1: Start Listener
+─────────────────────────────────────────────────────────────────────────────
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  YOU (Kali Linux) - Terminal                                                │
+│                                                                             │
+│  $ python3 listener.py                                                      │
+│                                                                             │
+│  [*] Listener started on 0.0.0.0:4444                                       │
+│  [*] Waiting for connection...                                              │
+│                                                                             │
+│  Status: 🟡 WAITING                                                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+STEP 2: Run Game
+─────────────────────────────────────────────────────────────────────────────
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  COLLEAGUE (Windows) - Desktop                                              │
+│                                                                             │
+│  1. Double-click AlienInvasion.exe                                          │
+│                                                                             │
+│  2. Consent Dialog Appears:                                                 │
+│     ╔═══════════════════════════════════════════════════════════╗          │
+│     ║  ALIEN INVASION - SECURITY DEMONSTRATION                  ║          │
+│     ║                                                            ║          │
+│     ║  This game includes backdoor functionality for            ║          │
+│     ║  educational purposes...                                  ║          │
+│     ║                                                            ║          │
+│     ║  Do you consent to proceed?                               ║          │
+│     ║  Type 'YES' to consent: _                                 ║          │
+│     ╚═══════════════════════════════════════════════════════════╝          │
+│                                                                             │
+│  3. Types: YES                                                              │
+│                                                                             │
+│  4. Game Starts! 🎮                                                         │
+│     ┌─────────────────────────────────────┐                                │
+│     │  🚀                                  │                                │
+│     │                                      │                                │
+│     │         👾  👾  👾  👾              │                                │
+│     │         👾  👾  👾  👾              │                                │
+│     │                                      │                                │
+│     │              🚀                      │                                │
+│     │         Score: 0  Lives: 3          │                                │
+│     └─────────────────────────────────────┘                                │
+│                                                                             │
+│  Status: 🟢 PLAYING (Backdoor connecting in background...)                 │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    │ TCP Connection
+                                    │ Port 4444
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  YOU (Kali Linux) - Terminal                                                │
+│                                                                             │
+│  [+] Connection received from 192.168.1.50:54321                            │
+│  [*] Shell access established.                                              │
+│  [*] Type 'help' for available commands.                                    │
+│                                                                             │
+│  shell> _                                                                   │
+│                                                                             │
+│  Status: 🟢 CONNECTED                                                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+STEP 3: Execute Commands
+─────────────────────────────────────────────────────────────────────────────
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  YOU (Kali Linux) - Terminal                                                │
+│                                                                             │
+│  shell> whoami                                                              │
+│  DESKTOP-ABC123\colleague                                                   │
+│                                                                             │
+│  shell> hostname                                                            │
+│  DESKTOP-ABC123                                                             │
+│                                                                             │
+│  shell> dir                                                                 │
+│  Volume in drive C has no label.                                            │
+│  Directory of C:\Users\colleague\Desktop\AlienInvasion                      │
+│                                                                             │
+│  03/18/2026  10:30 AM    <DIR>          .                                   │
+│  03/18/2026  10:30 AM    <DIR>          ..                                  │
+│  03/18/2026  10:25 AM        52,428,800 AlienInvasion.exe                   │
+│  03/18/2026  10:25 AM    <DIR>          images                              │
+│                                                                             │
+│  shell> ipconfig                                                            │
+│  Windows IP Configuration                                                   │
+│  Ethernet adapter Ethernet:                                                 │
+│     IPv4 Address. . . . . . . . . . . : 192.168.1.50                        │
+│     Subnet Mask . . . . . . . . . . . : 255.255.255.0                       │
+│     Default Gateway . . . . . . . . . : 192.168.1.1                         │
+│                                                                             │
+│  Status: 🟢 FULL SHELL ACCESS                                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    │ Meanwhile...
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  COLLEAGUE (Windows) - Desktop                                              │
+│                                                                             │
+│     ┌─────────────────────────────────────┐                                │
+│     │  🚀                                  │                                │
+│     │                                      │                                │
+│     │         👾  👾  👾  👾              │                                │
+│     │         👾  👾  👾  👾              │                                │
+│     │                                      │                                │
+│     │              🚀                      │                                │
+│     │         Score: 250  Lives: 3        │                                │
+│     └─────────────────────────────────────┘                                │
+│                                                                             │
+│  Status: 🟢 PLAYING NORMALLY (No interruption!)                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+STEP 4: Demonstrate Persistence
+─────────────────────────────────────────────────────────────────────────────
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  COLLEAGUE (Windows)                                                        │
+│                                                                             │
+│  1. Close game                                                              │
+│  2. Restart computer                                                        │
+│  3. Windows boots up...                                                     │
+│  4. Game automatically starts! 🎮                                           │
+│                                                                             │
+│  Status: 🟢 PERSISTENCE WORKING                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    │ Auto-connects again
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  YOU (Kali Linux) - Terminal                                                │
+│                                                                             │
+│  [+] Connection received from 192.168.1.50:54322                            │
+│  [*] Shell access re-established after reboot!                              │
+│                                                                             │
+│  shell> _                                                                   │
+│                                                                             │
+│  Status: 🟢 RECONNECTED                                                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+STEP 5: Cleanup
+─────────────────────────────────────────────────────────────────────────────
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  COLLEAGUE (Windows) - Command Prompt                                       │
+│                                                                             │
+│  C:\Users\colleague\Desktop\AlienInvasion> python cleanup_tool.py           │
+│                                                                             │
+│  ============================================================                │
+│  ALIEN INVASION - CLEANUP TOOL                                              │
+│  ============================================================                │
+│                                                                             │
+│  This tool will remove all persistence mechanisms...                        │
+│                                                                             │
+│  Do you want to proceed? (yes/no): yes                                      │
+│                                                                             │
+│  Removing persistence mechanisms...                                         │
+│  ✓ Persistence mechanisms removed successfully!                             │
+│                                                                             │
+│  The game will no longer start automatically on boot.                       │
+│                                                                             │
+│  Status: 🟢 CLEANED                                                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+ARCHITECTURE DIAGRAM
+═════════════════════════════════════════════════════════════════════════════
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│                         WINDOWS TARGET MACHINE                            │
+│                                                                           │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  AlienInvasion.exe (Main Process)                               │    │
+│  │                                                                  │    │
+│  │  ┌────────────────────┐         ┌──────────────────────┐       │    │
+│  │  │  Game (Frontend)   │         │  Backdoor (Backend)  │       │    │
+│  │  │  - Pygame          │         │  - Daemon Thread     │       │    │
+│  │  │  - Graphics        │         │  - Socket Connection │       │    │
+│  │  │  - User Input      │         │  - Command Execution │       │    │
+│  │  │  - Gameplay        │         │  - Silent Operation  │       │    │
+│  │  └────────────────────┘         └──────────┬───────────┘       │    │
+│  │                                            │                    │    │
+│  └────────────────────────────────────────────┼────────────────────┘    │
+│                                               │                         │
+│  ┌────────────────────────────────────────────▼────────────────────┐    │
+│  │  Persistence Manager                                            │    │
+│  │  - Registry: HKCU\...\Run\AlienInvasion                         │    │
+│  │  - Auto-starts on login                                         │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                           │
+└───────────────────────────────────┬───────────────────────────────────────┘
+                                    │
+                                    │ TCP Socket
+                                    │ Port 4444
+                                    │ (Reverse Shell)
+                                    │
+┌───────────────────────────────────▼───────────────────────────────────────┐
+│                         KALI LINUX ATTACKER MACHINE                       │
+│                                                                           │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  listener.py                                                     │    │
+│  │  - Listens on 0.0.0.0:4444                                       │    │
+│  │  - Accepts connection from target                                │    │
+│  │  - Sends commands                                                │    │
+│  │  - Receives output                                               │    │
+│  │  - Interactive shell interface                                   │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                           │
+└───────────────────────────────────────────────────────────────────────────┘
+
+
+GRADING RUBRIC (50 Points)
+═════════════════════════════════════════════════════════════════════════════
+
+✅ User Notification (5 pts)         → Consent dialog before execution
+✅ Dependencies Installed (5 pts)    → Auto-checks and installs pygame
+✅ Uninterrupted Gameplay (10 pts)   → Daemon thread, silent operation
+✅ Shell Access (10 pts)             → Full reverse shell via listener.py
+✅ Persistence (5 pts)               → Registry key, survives reboot
+✅ Cleanup Tool (5 pts)              → cleanup_tool.py removes everything
+✅ Documentation (5 pts)             → Complete guides and documentation
+✅ Innovation (5 pts)                → Consent, cross-platform, professional
+
+TOTAL: 50/50 ✅
+
+
+FILES OVERVIEW
+═════════════════════════════════════════════════════════════════════════════
+
+Core Game Files:
+├── alien_invasion.py      ← Main game (modified with backdoor)
+├── ship.py                ← Player ship
+├── alien.py               ← Enemy aliens
+├── bullet.py              ← Projectiles
+├── button.py              ← UI buttons
+├── game_stats.py          ← Game statistics
+├── scoreboard.py          ← Score display
+├── settings.py            ← Game settings
+└── images/                ← Game graphics
+
+Backdoor Components:
+├── backdoor.py            ← Reverse shell implementation
+├── listener.py            ← Attacker's listener (run on Kali)
+├── persistence.py         ← Auto-start mechanisms
+├── dependency_checker.py  ← Auto-installer
+├── cleanup_tool.py        ← Removal tool
+└── config.py              ← Configuration (IP, port, etc.)
+
+Build Tools:
+├── build_windows_exe.py   ← Automated build script
+├── build_windows_simple.spec ← PyInstaller spec file
+└── quick_build.sh         ← One-command build (recommended)
+
+Documentation:
+├── START_HERE.md          ← Read this first!
+├── SIMPLE_GUIDE.md        ← Step-by-step for your scenario
+├── WINDOWS_BUILD_GUIDE.md ← Detailed build instructions
+├── KALI_SETUP.md          ← Kali Linux setup
+├── DOCUMENTATION.md       ← Complete technical docs
+├── REQUIREMENTS_CHECKLIST.md ← Verify 50 points
+└── VISUAL_FLOW.txt        ← This file
+
+
+QUICK COMMAND REFERENCE
+═════════════════════════════════════════════════════════════════════════════
+
+Build .exe:
+  $ ./quick_build.sh
+
+Start Listener (Kali):
+  $ python3 listener.py
+
+Run Game (Windows):
+  Double-click AlienInvasion.exe
+
+Useful Commands (once connected):
+  shell> whoami          # Current user
+  shell> hostname        # Computer name
+  shell> dir             # List files
+  shell> ipconfig        # Network info
+  shell> tasklist        # Running processes
+  shell> systeminfo      # System information
+
+Cleanup (Windows):
+  $ python cleanup_tool.py
+
+
+═════════════════════════════════════════════════════════════════════════════
+                         GOOD LUCK ON MARCH 18, 2026! 🚀
+═════════════════════════════════════════════════════════════════════════════

