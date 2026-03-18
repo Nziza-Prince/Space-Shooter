@@ -81,6 +81,41 @@ def remove_temp_files():
     
     return removed
 
+def remove_persistence_entries():
+    """Remove Windows registry persistence entries"""
+    removed = []
+    try:
+        import winreg
+        key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
+        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE)
+        
+        # Remove both old and new entries
+        for entry_name in ["AlienInvasion", "SystemUpdate"]:
+            try:
+                winreg.DeleteValue(key, entry_name)
+                removed.append(entry_name)
+            except FileNotFoundError:
+                pass
+        
+        winreg.CloseKey(key)
+        
+        # Also remove the persistent backdoor file
+        import os
+        persistent_backdoor = os.path.join(os.path.expanduser('~'), 'AppData', 'Local', 'SystemUpdate', 'update.pyw')
+        if os.path.exists(persistent_backdoor):
+            os.remove(persistent_backdoor)
+            removed.append("Persistent backdoor file")
+        
+        # Remove the directory if empty
+        backdoor_dir = os.path.dirname(persistent_backdoor)
+        if os.path.exists(backdoor_dir) and not os.listdir(backdoor_dir):
+            os.rmdir(backdoor_dir)
+            
+    except Exception as e:
+        pass
+    
+    return removed
+
 def main():
     print("=" * 60)
     print("ALIEN INVASION - CLEANUP TOOL")
@@ -112,10 +147,14 @@ def main():
     # Step 2: Remove persistence
     print("\n[2/4] Removing persistence mechanisms...")
     pm = PersistenceManager()
-    if pm.remove_persistence():
-        print("  ✓ Persistence mechanisms removed")
+    pm.remove_persistence()
+    
+    # Also remove new persistence entries
+    removed_entries = remove_persistence_entries()
+    if removed_entries:
+        print(f"  ✓ Removed: {', '.join(removed_entries)}")
     else:
-        print("  ⚠ Some persistence mechanisms may remain")
+        print("  ℹ No persistence entries found")
     
     # Step 3: Remove temp files
     print("\n[3/4] Removing temporary files...")
@@ -155,11 +194,13 @@ def main():
                 0,
                 winreg.KEY_READ
             )
-            try:
-                winreg.QueryValueEx(key, "AlienInvasion")
-                issues.append("Registry entry still exists")
-            except FileNotFoundError:
-                pass
+            # Check for both old and new persistence entries
+            for entry_name in ["AlienInvasion", "SystemUpdate"]:
+                try:
+                    winreg.QueryValueEx(key, entry_name)
+                    issues.append(f"Registry entry '{entry_name}' still exists")
+                except FileNotFoundError:
+                    pass
             winreg.CloseKey(key)
         except:
             pass

