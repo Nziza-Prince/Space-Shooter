@@ -1,6 +1,8 @@
 import pygame
 from settings import Settings
 from pygame.sprite import Sprite
+import sys
+import os
 
 class Ship(Sprite):
     """A class for the ship"""
@@ -11,8 +13,19 @@ class Ship(Sprite):
         self.screen = ai_game.screen
         self.screen_rect = ai_game.screen.get_rect()
         self.settings = Settings()
+        
+        # Get the correct path for images (works with PyInstaller)
+        if getattr(sys, 'frozen', False):
+            # Running as compiled executable
+            base_path = sys._MEIPASS
+        else:
+            # Running as script
+            base_path = os.path.dirname(os.path.abspath(__file__))
+        
+        image_path = os.path.join(base_path, 'images', 'ship.png')
+        
         # Loading the image and getting its rect
-        self.image = pygame.image.load('images/ship.png')
+        self.image = pygame.image.load(image_path)
         self.rect = self.image.get_rect()
         # Start each new ship at the bottom center of the screen
         self.rect.midbottom = self.screen_rect.midbottom

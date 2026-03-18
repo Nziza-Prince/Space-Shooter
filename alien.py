@@ -1,5 +1,7 @@
 import pygame
 from pygame.sprite import Sprite
+import sys
+import os
 
 class Alien(Sprite):
     """A class to represent an alien in the fleet"""
@@ -7,7 +9,18 @@ class Alien(Sprite):
         super().__init__()
         self.screen = ai_game.screen
         self.settings = ai_game.settings
-        self.image = pygame.image.load('images/alien.png')
+        
+        # Get the correct path for images (works with PyInstaller)
+        if getattr(sys, 'frozen', False):
+            # Running as compiled executable
+            base_path = sys._MEIPASS
+        else:
+            # Running as script
+            base_path = os.path.dirname(os.path.abspath(__file__))
+        
+        image_path = os.path.join(base_path, 'images', 'alien.png')
+        
+        self.image = pygame.image.load(image_path)
         self.rect = self.image.get_rect()
         self.rect.x = self.rect.width
         self.rect.y = self.rect.height
